@@ -1,0 +1,33 @@
+# FactFlip
+
+**Multiplication Facts Practice • Skip Counting Visuals • Instant Feedback**
+
+A web app that helps kids truly *understand* multiplication facts using visual skip-counting and the commutative property.
+
+Built as a single HTML file.
+
+- **Practice Mode**  
+  - Skip-counting with glowing dots  
+  - **FLIP** button instantly swaps factors (teaches commutativity)  
+  - Final answer appears when complete  
+
+- **Test Mode**  
+  - 4 smart multiple-choice answers (two other multiples + one off-by-one)  
+  - Instant green/red feedback + correct answer reveal  
+
+- **Smart Fact Selection**  
+  - Toggle any individual fact from 2×2 to 9×9  
+  - “Select All / Clear All” buttons  
+  - Never repeats the same fact immediately  
+
+---
+
+## Tech Stack
+
+- Pure HTML5 + Tailwind CSS + Vanilla JavaScript
+- Zero dependencies
+- Single file (≈ 12 KB)
+
+---
+
+Prototype built with SuperGrok 4.20
