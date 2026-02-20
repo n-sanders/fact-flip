@@ -149,7 +149,15 @@
         let currentSkipStep = 0;
         let lastFactKey = null;
         let finalRevealTimeoutId = null;
+        let revealLockTimeoutId = null;
         let problemGeneration = 0;
+
+        function setActionButtonLocked(isLocked) {
+            const btn = document.getElementById('action-btn');
+            btn.disabled = isLocked;
+            btn.classList.toggle('opacity-60', isLocked);
+            btn.classList.toggle('cursor-not-allowed', isLocked);
+        }
 
         function loadSettings() {
             const saved = localStorage.getItem('selectedMultiFacts');
@@ -224,6 +232,11 @@
                 clearTimeout(finalRevealTimeoutId);
                 finalRevealTimeoutId = null;
             }
+            if (revealLockTimeoutId !== null) {
+                clearTimeout(revealLockTimeoutId);
+                revealLockTimeoutId = null;
+            }
+            setActionButtonLocked(false);
 
             if (selectedFacts.size === 0) selectAll(true);
 
@@ -355,6 +368,7 @@
                 const nextRow = container.children[currentSkipStep - 1];
                 nextRow.classList.remove('hidden');
                 if (currentSkipStep === currentB) {
+                    setActionButtonLocked(true);
                     const generationAtReveal = problemGeneration;
                     const revealA = currentA;
                     const revealB = currentB;
@@ -366,6 +380,11 @@
                             ${revealA} × ${revealB} = <span class="text-emerald-100">${revealCorrect}</span>
                         `;
                         finalRevealTimeoutId = null;
+                        revealLockTimeoutId = setTimeout(() => {
+                            if (generationAtReveal !== problemGeneration || currentMode !== 'practice') return;
+                            setActionButtonLocked(false);
+                            revealLockTimeoutId = null;
+                        }, 1000);
                     }, 400);
                 }
                 updateActionButton();
@@ -380,6 +399,11 @@
                 clearTimeout(finalRevealTimeoutId);
                 finalRevealTimeoutId = null;
             }
+            if (revealLockTimeoutId !== null) {
+                clearTimeout(revealLockTimeoutId);
+                revealLockTimeoutId = null;
+            }
+            setActionButtonLocked(false);
             [currentA, currentB] = [currentB, currentA];
             document.getElementById('problem').textContent = `${currentA} × ${currentB}`;
             document.getElementById('final-reveal').classList.add('hidden');
