@@ -148,6 +148,8 @@
         let currentA = 0, currentB = 0, currentCorrect = 0;
         let currentSkipStep = 0;
         let lastFactKey = null;
+        let finalRevealTimeoutId = null;
+        let problemGeneration = 0;
 
         function loadSettings() {
             const saved = localStorage.getItem('selectedMultiFacts');
@@ -217,6 +219,12 @@
         }
 
         function generateNewProblem() {
+            problemGeneration++;
+            if (finalRevealTimeoutId !== null) {
+                clearTimeout(finalRevealTimeoutId);
+                finalRevealTimeoutId = null;
+            }
+
             if (selectedFacts.size === 0) selectAll(true);
 
             const factsArray = Array.from(selectedFacts);
@@ -347,11 +355,17 @@
                 const nextRow = container.children[currentSkipStep - 1];
                 nextRow.classList.remove('hidden');
                 if (currentSkipStep === currentB) {
-                    setTimeout(() => {
+                    const generationAtReveal = problemGeneration;
+                    const revealA = currentA;
+                    const revealB = currentB;
+                    const revealCorrect = currentCorrect;
+                    finalRevealTimeoutId = setTimeout(() => {
+                        if (generationAtReveal !== problemGeneration || currentMode !== 'practice') return;
                         document.getElementById('final-reveal').classList.remove('hidden');
                         document.getElementById('final-equation').innerHTML = `
-                            ${currentA} × ${currentB} = <span class="text-emerald-100">${currentCorrect}</span>
+                            ${revealA} × ${revealB} = <span class="text-emerald-100">${revealCorrect}</span>
                         `;
+                        finalRevealTimeoutId = null;
                     }, 400);
                 }
                 updateActionButton();
@@ -362,6 +376,10 @@
 
         function flipFact() {
             if (currentMode !== 'practice') return;
+            if (finalRevealTimeoutId !== null) {
+                clearTimeout(finalRevealTimeoutId);
+                finalRevealTimeoutId = null;
+            }
             [currentA, currentB] = [currentB, currentA];
             document.getElementById('problem').textContent = `${currentA} × ${currentB}`;
             document.getElementById('final-reveal').classList.add('hidden');
