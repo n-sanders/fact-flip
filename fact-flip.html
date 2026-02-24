@@ -314,12 +314,12 @@
             const row = document.createElement('div');
             row.className = `skip-row flex items-center justify-between bg-zinc-950 border border-zinc-700 hover:border-zinc-600 rounded-3xl px-8 py-4`;
             const numDiv = document.createElement('div');
-            numDiv.className = `text-[2.35rem] font-bold title-font tracking-tighter w-20 text-right ${step === currentB ? 'text-emerald-400' : 'text-sky-400'}`;
-            numDiv.textContent = step * currentA;
+            numDiv.className = `text-[2.35rem] font-bold title-font tracking-tighter w-20 text-right ${step === currentA ? 'text-emerald-400' : 'text-sky-400'}`;
+            numDiv.textContent = step * currentB;
             row.appendChild(numDiv);
             const dotsDiv = document.createElement('div');
             dotsDiv.className = 'flex gap-1.5 flex-wrap';
-            for (let d = 0; d < currentA; d++) {
+            for (let d = 0; d < currentB; d++) {
                 const dot = document.createElement('div'); dot.className = 'dot'; dotsDiv.appendChild(dot);
             }
             row.appendChild(dotsDiv);
@@ -329,7 +329,7 @@
         function initSkipCounting() {
             const container = document.getElementById('skip-container');
             container.innerHTML = '';
-            for (let i = 1; i <= currentB; i++) {
+            for (let i = 1; i <= currentA; i++) {
                 const row = createSkipRow(i);
                 if (i > 1) row.classList.add('hidden');
                 container.appendChild(row);
@@ -345,7 +345,7 @@
                 btn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
                 btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
             } else {
-                if (currentSkipStep >= currentB) {
+                if (currentSkipStep >= currentA) {
                     textEl.textContent = 'Next Fact →';
                     btn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
                     btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
@@ -362,12 +362,12 @@
                 generateNewProblem();
                 return;
             }
-            if (currentSkipStep < currentB) {
+            if (currentSkipStep < currentA) {
                 currentSkipStep++;
                 const container = document.getElementById('skip-container');
                 const nextRow = container.children[currentSkipStep - 1];
                 nextRow.classList.remove('hidden');
-                if (currentSkipStep === currentB) {
+                if (currentSkipStep === currentA) {
                     setActionButtonLocked(true);
                     const generationAtReveal = problemGeneration;
                     const revealA = currentA;
