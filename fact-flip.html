@@ -59,6 +59,10 @@
             </div>
             
             <div class="flex items-center gap-x-3">
+                <button onclick="toggleMasteredPanel()" class="flex items-center gap-x-2 px-5 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-2xl text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-star"></i>
+                    <span>Mastered</span>
+                </button>
                 <div class="inline-flex bg-zinc-900 border border-zinc-700 rounded-3xl p-1 text-sm">
                     <button onclick="setMode('practice')" id="btn-practice" class="mode-btn px-6 py-2 rounded-3xl font-medium">Practice</button>
                     <button onclick="setMode('test')" id="btn-test" class="mode-btn px-6 py-2 rounded-3xl font-medium">Test</button>
@@ -140,10 +144,28 @@
         </div>
     </div>
 
-    <div onclick="toggleSettings()" id="backdrop" class="hidden fixed inset-0 bg-black/60 z-40"></div>
+    <!-- Mastered Facts Panel -->
+    <div id="mastered-panel" class="slide-panel fixed top-0 left-0 h-full w-96 bg-zinc-900 border-r border-zinc-700 shadow-2xl -translate-x-full flex flex-col z-50">
+        <div class="p-6 border-b border-zinc-700 flex items-center justify-between">
+            <h2 class="text-2xl font-semibold title-font">Mastered Facts</h2>
+            <button onclick="toggleMasteredPanel()" class="text-zinc-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+        </div>
+        <div class="p-6 flex-1 overflow-auto">
+            <p class="text-sm text-zinc-400 mb-6">Mark facts you no longer need to practice. Mastered facts are excluded from practice mode only.</p>
+            <div id="mastered-facts-container" class="space-y-10"></div>
+        </div>
+        <div class="p-6 border-t border-zinc-700 mt-auto">
+            <button onclick="toggleMasteredPanel()" class="w-full py-4 bg-yellow-300 text-zinc-900 font-semibold rounded-2xl">Done</button>
+        </div>
+    </div>
+
+    <div onclick="closePanels()" id="backdrop" class="hidden fixed inset-0 bg-black/60 z-40"></div>
 
     <script>
         let selectedFacts = new Set();
+        let masteredFacts = new Set();
         let currentMode = 'practice';
         let currentA = 0, currentB = 0, currentCorrect = 0;
         let currentSkipStep = 0;
@@ -165,11 +187,14 @@
             else {
                 for (let i = 2; i <= 9; i++) for (let j = i; j <= 9; j++) selectedFacts.add(`${i}x${j}`);
             }
+            const savedMastered = localStorage.getItem('masteredMultiFacts');
+            if (savedMastered) masteredFacts = new Set(JSON.parse(savedMastered));
             currentMode = localStorage.getItem('factFlashMode') || 'practice';
         }
 
         function saveSettings() {
             localStorage.setItem('selectedMultiFacts', JSON.stringify(Array.from(selectedFacts)));
+            localStorage.setItem('masteredMultiFacts', JSON.stringify(Array.from(masteredFacts)));
             localStorage.setItem('factFlashMode', currentMode);
         }
 
@@ -197,6 +222,7 @@
             if (selectedFacts.has(key)) selectedFacts.delete(key); else selectedFacts.add(key);
             el.classList.toggle('bg-emerald-600'); el.classList.toggle('border-emerald-500'); el.classList.toggle('text-white');
             el.classList.toggle('bg-zinc-800'); el.classList.toggle('border-zinc-700');
+            createMasteredToggles();
             saveSettings();
         }
 
@@ -204,6 +230,7 @@
             selectedFacts.clear();
             if (all) for (let i = 2; i <= 9; i++) for (let j = i; j <= 9; j++) selectedFacts.add(`${i}x${j}`);
             createFactToggles();
+            createMasteredToggles();
             saveSettings();
         }
 
@@ -212,6 +239,59 @@
             const backdrop = document.getElementById('backdrop');
             panel.classList.toggle('translate-x-full');
             backdrop.classList.toggle('hidden');
+            document.getElementById('mastered-panel').classList.add('-translate-x-full');
+        }
+
+        function toggleMasteredPanel() {
+            const panel = document.getElementById('mastered-panel');
+            const backdrop = document.getElementById('backdrop');
+            panel.classList.toggle('-translate-x-full');
+            backdrop.classList.toggle('hidden');
+            document.getElementById('settings-panel').classList.add('translate-x-full');
+        }
+
+        function closePanels() {
+            document.getElementById('settings-panel').classList.add('translate-x-full');
+            document.getElementById('mastered-panel').classList.add('-translate-x-full');
+            document.getElementById('backdrop').classList.add('hidden');
+        }
+
+        function createMasteredToggles() {
+            const container = document.getElementById('mastered-facts-container');
+            container.innerHTML = '';
+            for (let i = 2; i <= 9; i++) {
+                const section = document.createElement('div');
+                section.innerHTML = `<div class="flex items-center gap-x-4 mb-4"><div class="w-9 h-9 bg-zinc-800 rounded-2xl flex items-center justify-center text-lg font-bold text-yellow-300">×${i}</div><div class="text-zinc-400 font-medium">Facts</div></div>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-4 gap-3';
+                for (let j = i; j <= 9; j++) {
+                    const key = `${i}x${j}`;
+                    const isSelected = selectedFacts.has(key);
+                    const isMastered = masteredFacts.has(key);
+                    const btn = document.createElement('button');
+                    btn.className = `h-16 text-xl font-semibold title-font rounded-3xl border flex items-center justify-center transition-all ${isMastered ? 'bg-yellow-300 border-yellow-200 text-zinc-900' : 'bg-zinc-800 border-zinc-700'} ${isSelected ? 'hover:border-yellow-300' : 'opacity-40 cursor-not-allowed'}`;
+                    btn.textContent = `${i} × ${j}`;
+                    btn.disabled = !isSelected;
+                    btn.onclick = () => toggleMasteredFact(key);
+                    grid.appendChild(btn);
+                }
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+
+        function toggleMasteredFact(key) {
+            if (!selectedFacts.has(key)) return;
+            const isMastering = !masteredFacts.has(key);
+            if (isMastering) {
+                const unmasteredSelectedCount = Array.from(selectedFacts).filter(f => !masteredFacts.has(f)).length;
+                if (unmasteredSelectedCount <= 1) return;
+                masteredFacts.add(key);
+            } else {
+                masteredFacts.delete(key);
+            }
+            createMasteredToggles();
+            saveSettings();
         }
 
         function setMode(mode) {
@@ -240,7 +320,10 @@
 
             if (selectedFacts.size === 0) selectAll(true);
 
-            const factsArray = Array.from(selectedFacts);
+            let factsArray = currentMode === 'practice'
+                ? Array.from(selectedFacts).filter(key => !masteredFacts.has(key))
+                : Array.from(selectedFacts);
+            if (factsArray.length === 0) factsArray = Array.from(selectedFacts);
             let randomKey;
             if (factsArray.length > 1 && lastFactKey) {
                 const filtered = factsArray.filter(k => k !== lastFactKey);
@@ -414,6 +497,7 @@
         function init() {
             loadSettings();
             createFactToggles();
+            createMasteredToggles();
             updateModeButtons();
             generateNewProblem();
         }
