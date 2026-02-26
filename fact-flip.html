@@ -306,6 +306,22 @@
             document.getElementById('btn-test').classList.toggle('bg-emerald-600', currentMode === 'test');
         }
 
+        function normalizeFactKey(a, b) {
+            const low = Math.min(a, b);
+            const high = Math.max(a, b);
+            return `${low}x${high}`;
+        }
+
+        function getAlwaysIncludedTestFacts() {
+            const alwaysIncluded = new Set();
+            for (let n = 0; n <= 10; n++) {
+                alwaysIncluded.add(normalizeFactKey(0, n));
+                alwaysIncluded.add(normalizeFactKey(1, n));
+                alwaysIncluded.add(normalizeFactKey(10, n));
+            }
+            return Array.from(alwaysIncluded);
+        }
+
         function generateNewProblem() {
             problemGeneration++;
             if (finalRevealTimeoutId !== null) {
@@ -318,12 +334,20 @@
             }
             setActionButtonLocked(false);
 
-            if (selectedFacts.size === 0) selectAll(true);
+            if (currentMode === 'practice' && selectedFacts.size === 0) selectAll(true);
 
-            let factsArray = currentMode === 'practice'
-                ? Array.from(selectedFacts).filter(key => !masteredFacts.has(key))
-                : Array.from(selectedFacts);
-            if (factsArray.length === 0) factsArray = Array.from(selectedFacts);
+            let factsArray;
+            if (currentMode === 'practice') {
+                factsArray = Array.from(selectedFacts).filter(key => !masteredFacts.has(key));
+                if (factsArray.length === 0) factsArray = Array.from(selectedFacts);
+            } else {
+                factsArray = Array.from(new Set([
+                    ...Array.from(selectedFacts),
+                    ...getAlwaysIncludedTestFacts()
+                ]));
+                if (factsArray.length === 0) factsArray = getAlwaysIncludedTestFacts();
+            }
+
             let randomKey;
             if (factsArray.length > 1 && lastFactKey) {
                 const filtered = factsArray.filter(k => k !== lastFactKey);
